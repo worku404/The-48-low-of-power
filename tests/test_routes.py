@@ -66,3 +66,72 @@ def test_like_section_api(client):
     get_data = json.loads(get_response.data)
     assert get_data['likes'] == 1
     assert get_data['liked'] is True
+
+def test_audio_duration_calculation(client):
+    response = client.get('/api/sections/1')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert 'audio_duration' in data
+    assert data['audio_duration'] > 0
+
+def test_user_registration_and_login_flow(client):
+    # Register a new user
+    reg_data = {'username': 'testuser', 'password': 'mypassword'}
+    response = client.post('/api/auth/register', json=reg_data)
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['username'] == 'testuser'
+
+    # Registering the same user should fail
+    response_dup = client.post('/api/auth/register', json=reg_data)
+    assert response_dup.status_code == 400
+    assert 'ቀድሞ ተመዝግቧል' in json.loads(response_dup.data)['error']
+
+    # Logout
+    logout_resp = client.post('/api/auth/logout')
+    assert logout_resp.status_code == 200
+
+    # Login with wrong password should fail
+    login_wrong = {'username': 'testuser', 'password': 'wrongpassword'}
+    response_wrong = client.post('/api/auth/login', json=login_wrong)
+    assert response_wrong.status_code == 401
+    assert 'የይለፍ ቃል የተሳሳተ' in json.loads(response_wrong.data)['error']
+
+    # Login with non-existent user should fail
+    login_nonexistent = {'username': 'stranger', 'password': 'mypassword'}
+    response_nonexistent = client.post('/api/auth/login', json=login_nonexistent)
+    assert response_nonexistent.status_code == 404
+    assert 'አልተመዘገበም' in json.loads(response_nonexistent.data)['error']
+
+    # Login with correct credentials should succeed
+    login_data = {'username': 'testuser', 'password': 'mypassword'}
+    response_login = client.post('/api/auth/login', json=login_data)
+    assert response_login.status_code == 200
+    assert json.loads(response_login.data)['username'] == 'testuser'
+
+def test_progress_tracking_api_flow(client):
+    # Fetching progress when logged out should fail (401)
+    response_unauth = client.get('/api/progress')
+    assert response_unauth.status_code == 401
+
+    # Register/Login user
+    client.post('/api/auth/register', json={'username': 'proguser', 'password': 'password'})
+
+    # Get progress (should be empty initially)
+    prog_resp = client.get('/api/progress')
+    assert prog_resp.status_code == 200
+    data = json.loads(prog_resp.data)
+    assert data['completed_laws'] == []
+
+    # Complete Law 1
+    complete_resp = client.post('/api/progress/complete', json={'law_id': 1})
+    assert complete_resp.status_code == 200
+    complete_data = json.loads(complete_resp.data)
+    assert 1 in complete_data['completed_laws']
+
+    # Get updated progress
+    prog_resp_updated = client.get('/api/progress')
+    assert prog_resp_updated.status_code == 200
+    updated_data = json.loads(prog_resp_updated.data)
+    assert updated_data['completed_laws'] == [1]
+
