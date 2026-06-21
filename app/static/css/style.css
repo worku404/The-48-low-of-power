@@ -6,20 +6,21 @@
     --text-color: #2c2a29;
     --text-secondary: #6e675f;
     --border-color: #e5decb;
-    --accent-color: #b35933; /* Soft Rust */
+    --accent-color: #b35933;
+    /* Soft Rust */
     --accent-hover: #9c4c2a;
     --accent-muted: rgba(179, 89, 51, 0.1);
     --hover-bg: #ece5d3;
-    
+
     /* Typography */
     --font-serif: "Noto Serif Ethiopic", Georgia, "Times New Roman", serif;
     --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
-    
+
     /* Layout Dimensions */
     --sidebar-width: 280px;
     --header-height: 60px;
     --max-text-width: 68ch;
-    
+
     /* Transitions */
     --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -31,7 +32,8 @@
     --text-color: #e6e1da;
     --text-secondary: #99938a;
     --border-color: #2e2e2c;
-    --accent-color: #e57e50; /* Brighter Warm Rust */
+    --accent-color: #e57e50;
+    /* Brighter Warm Rust */
     --accent-hover: #f0956c;
     --accent-muted: rgba(229, 126, 80, 0.15);
     --hover-bg: #2c2c2a;
@@ -44,7 +46,8 @@
     padding: 0;
 }
 
-html, body {
+html,
+body {
     height: 100%;
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -105,9 +108,11 @@ html, body {
 .sidebar-nav::-webkit-scrollbar {
     width: 6px;
 }
+
 .sidebar-nav::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .sidebar-nav::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 3px;
@@ -148,10 +153,12 @@ html, body {
     border-radius: 50%;
     display: inline-block;
 }
+
 .law-dot.filled {
     background-color: var(--accent-color);
     opacity: 0.8;
 }
+
 .law-dot.empty {
     border: 1px solid var(--text-secondary);
     opacity: 0.4;
@@ -190,7 +197,8 @@ html, body {
     font-size: 1rem;
     font-weight: 600;
     letter-spacing: -0.01em;
-    display: none; /* Only visible when sidebar is collapsed */
+    display: none;
+    /* Only visible when sidebar is collapsed */
 }
 
 .sidebar-collapsed .logo-text {
@@ -300,6 +308,7 @@ html, body {
     color: var(--accent-color);
     background-color: var(--accent-muted);
 }
+
 .control-btn.liked .heart-svg {
     fill: var(--accent-color);
 }
@@ -370,8 +379,84 @@ html, body {
     transform: translateX(-100%);
     position: absolute;
 }
+
 .sidebar-collapsed .main-content {
     margin-left: 0;
+}
+
+.right-bar-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* --- Social Icons & Hover Tooltips --- */
+.social-icon-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.social-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-smooth), transform var(--transition-smooth), visibility var(--transition-smooth);
+    text-align: center;
+    white-space: nowrap;
+    font-family: var(--font-sans);
+}
+
+/* Upward pointing arrow on the tooltip */
+.social-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 6px 6px 6px;
+    border-style: solid;
+    border-color: transparent transparent var(--border-color) transparent;
+}
+
+.social-tooltip::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 5px 5px 5px;
+    border-style: solid;
+    border-color: transparent transparent var(--sidebar-bg) transparent;
+}
+
+.social-icon-wrapper:hover .social-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(4px);
+}
+
+.tooltip-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.tooltip-sub {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.15rem;
+    line-height: 1.2;
 }
 
 /* Adaptive mobile layout (< 768px) */
@@ -384,7 +469,7 @@ html, body {
         transform: translateX(-100%);
         box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
     }
-    
+
     /* Overlay background when mobile sidebar is active */
     .app-container::after {
         content: "";
@@ -399,32 +484,32 @@ html, body {
         pointer-events: none;
         transition: opacity var(--transition-smooth);
     }
-    
+
     .sidebar-open .sidebar {
         transform: translateX(0);
     }
-    
+
     .sidebar-open.app-container::after {
         opacity: 1;
         pointer-events: auto;
     }
-    
+
     .logo-text {
         display: inline-block;
     }
-    
+
     .reader-viewport {
         padding: 1.5rem 1rem;
     }
-    
+
     .law-title {
         font-size: 1.8rem;
     }
-    
+
     .reader-controls {
         gap: 0.5rem;
     }
-    
+
     .control-btn {
         padding: 0.4rem 0.8rem;
         font-size: 0.8rem;
