@@ -60,13 +60,12 @@ def get_section_api(section_id):
     if body_text:
         text_utf8 = body_text.encode('utf-8')
         text_hash = hashlib.sha256(text_utf8).hexdigest()
-        cache_file_path = os.path.join(current_app.config['AUDIO_CACHE_DIR'], f"{text_hash}.wav")
+        cache_file_path = os.path.join(current_app.config['AUDIO_CACHE_DIR'], f"{text_hash}.mp3")
         if os.path.exists(cache_file_path):
             try:
-                with wave.open(cache_file_path, 'rb') as f:
-                    frames = f.getnframes()
-                    rate = f.getframerate()
-                    duration = frames / float(rate)
+                # Estimate duration based on 48kbps bitrate size
+                file_size = os.path.getsize(cache_file_path)
+                duration = file_size / 6000.0  # 48kbits/s = 6kbytes/s
             except Exception:
                 pass
         if not duration:
@@ -116,7 +115,9 @@ def get_section_audio_api(section_id):
     try:
         # Call TTS service (resolves cache check and Gemini call)
         audio_path = current_app.tts_service.get_audio_path(body_text)
-        return send_file(audio_path, mimetype='audio/wav', as_attachment=False)
+        
+        mimetype = 'audio/mpeg' if audio_path.endswith('.mp3') else 'audio/wav'
+        return send_file(audio_path, mimetype=mimetype, as_attachment=False)
         
     except EmptyContentError as e:
         return jsonify({'error': str(e)}), 400
