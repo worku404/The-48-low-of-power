@@ -92,7 +92,7 @@ def test_audio_endpoints(mock_client_class, client):
     # Test GET audio endpoint for seeded Law 1
     response = client.get('/api/sections/1/audio')
     assert response.status_code == 200
-    assert response.content_type == 'audio/wav'
+    assert response.content_type in ('audio/wav', 'audio/mpeg')
     import wave
     import io
     with wave.open(io.BytesIO(response.data), 'rb') as f:

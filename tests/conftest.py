@@ -14,8 +14,13 @@ def temp_db_file():
 
 @pytest.fixture
 def temp_cache_dir():
-    with tempfile.TemporaryDirectory() as cache_dir:
-        yield cache_dir
+    import gc
+    import shutil
+    db_dir = tempfile.mkdtemp()
+    yield db_dir
+    # Force GC to release file locks on Windows
+    gc.collect()
+    shutil.rmtree(db_dir, ignore_errors=True)
 
 @pytest.fixture
 def mock_sections_file():

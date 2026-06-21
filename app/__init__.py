@@ -5,6 +5,7 @@ from app.services.content import ContentService
 from app.services.likes import LikesService
 from app.services.tts import TTSService
 from app.services.user import UserService
+from app.services.db import DatabaseService
 
 def create_app(test_config=None):
     # Initialize the Flask application
@@ -15,7 +16,8 @@ def create_app(test_config=None):
         DATABASE_PATH=os.path.join(app.instance_path, 'likes.sqlite3'),
         AUDIO_CACHE_DIR=os.path.join(app.instance_path, 'audio_cache'),
         CONTENT_JSON_PATH=os.path.join(app.root_path, '..', 'data', 'sections.json'),
-        SECRET_KEY='dev-key-placeholder-for-session-fallback'
+        SECRET_KEY='dev-key-placeholder-for-session-fallback',
+        DATABASE_URL=os.environ.get('DATABASE_URL')
     )
 
     if test_config:
@@ -26,19 +28,24 @@ def create_app(test_config=None):
     os.makedirs(app.config['AUDIO_CACHE_DIR'], exist_ok=True)
 
     # Initialize Services and attach to app context or app config
+    db_service = DatabaseService(
+        db_path=app.config['DATABASE_PATH'],
+        database_url=app.config.get('DATABASE_URL')
+    )
     content_service = ContentService(data_path=app.config['CONTENT_JSON_PATH'])
-    likes_service = LikesService(db_path=app.config['DATABASE_PATH'])
+    likes_service = LikesService(db_service=db_service)
     tts_service = TTSService(cache_dir=app.config['AUDIO_CACHE_DIR'])
-    user_service = UserService(db_path=app.config['DATABASE_PATH'])
+    user_service = UserService(db_service=db_service)
     
     # Store services on the app object for easy retrieval in blueprints/routes
+    app.db_service = db_service
     app.content_service = content_service
     app.likes_service = likes_service
     app.tts_service = tts_service
     app.user_service = user_service
 
     # Register context teardown for database connections
-    app.teardown_appcontext(LikesService.close_db)
+    app.teardown_appcontext(DatabaseService.close_db)
 
     # Before request hook to ensure every visitor has a tracking cookie
     @app.before_request

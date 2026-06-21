@@ -1,111 +1,63 @@
-import sqlite3
-import os
-from flask import g
-
 class LikesService:
-    def __init__(self, db_path=None):
-        self._db_path = db_path
-
-    @property
-    def db_path(self):
-        if self._db_path is None:
-            from flask import current_app
-            self._db_path = os.path.join(current_app.instance_path, 'likes.sqlite3')
-        return self._db_path
-
-    def get_db(self):
-        if 'db' not in g:
-            db_dir = os.path.dirname(self.db_path)
-            os.makedirs(db_dir, exist_ok=True)
-            g.db = sqlite3.connect(self.db_path)
-            g.db.row_factory = sqlite3.Row
-            self._init_db(g.db)
-        return g.db
-
-    def _init_db(self, db):
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS section_likes (
-                section_id INTEGER PRIMARY KEY,
-                like_count INTEGER NOT NULL DEFAULT 0
-            )
-        """)
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS visitor_likes (
-                visitor_cookie TEXT NOT NULL,
-                section_id INTEGER NOT NULL,
-                PRIMARY KEY (visitor_cookie, section_id)
-            )
-        """)
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
-            )
-        """)
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS user_progress (
-                username TEXT NOT NULL,
-                law_id INTEGER NOT NULL,
-                completed INTEGER DEFAULT 1,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (username, law_id),
-                FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
-            )
-        """)
-        db.commit()
+    def __init__(self, db_service=None, db_path=None):
+        if db_service is None:
+            from app.services.db import DatabaseService
+            db_service = DatabaseService(db_path=db_path)
+        self.db_service = db_service
 
     def get_likes(self, section_id):
-        db = self.get_db()
-        cursor = db.execute(
+        cursor = self.db_service.execute(
             "SELECT like_count FROM section_likes WHERE section_id = ?",
             (section_id,)
         )
         row = cursor.fetchone()
+        cursor.close()
         return row['like_count'] if row else 0
 
     def has_liked(self, visitor_cookie, section_id):
         if not visitor_cookie:
             return False
-        db = self.get_db()
-        cursor = db.execute(
+        cursor = self.db_service.execute(
             "SELECT 1 FROM visitor_likes WHERE visitor_cookie = ? AND section_id = ?",
             (visitor_cookie, section_id)
         )
-        return cursor.fetchone() is not None
+        row = cursor.fetchone()
+        cursor.close()
+        return row is not None
 
     def add_like(self, visitor_cookie, section_id):
         if not visitor_cookie:
             return self.get_likes(section_id), False
 
-        db = self.get_db()
-        
         # Check if already liked
         if self.has_liked(visitor_cookie, section_id):
             return self.get_likes(section_id), False
 
         try:
             # Insert visitor record
-            db.execute(
+            cursor_vis = self.db_service.execute(
                 "INSERT INTO visitor_likes (visitor_cookie, section_id) VALUES (?, ?)",
                 (visitor_cookie, section_id)
             )
+            cursor_vis.close()
             
             # Upsert like count
-            db.execute("""
-                INSERT INTO section_likes (section_id, like_count)
-                VALUES (?, 1)
-                ON CONFLICT(section_id) DO UPDATE SET like_count = like_count + 1
-            """, (section_id,))
+            if self.db_service.is_postgres():
+                cursor_like = self.db_service.execute("""
+                    INSERT INTO section_likes (section_id, like_count)
+                    VALUES (?, 1)
+                    ON CONFLICT(section_id) DO UPDATE SET like_count = section_likes.like_count + 1
+                """, (section_id,))
+            else:
+                cursor_like = self.db_service.execute("""
+                    INSERT INTO section_likes (section_id, like_count)
+                    VALUES (?, 1)
+                    ON CONFLICT(section_id) DO UPDATE SET like_count = like_count + 1
+                """, (section_id,))
+            cursor_like.close()
             
-            db.commit()
+            self.db_service.commit()
             return self.get_likes(section_id), True
-        except sqlite3.IntegrityError:
-            db.rollback()
+        except Exception:
+            self.db_service.rollback()
             return self.get_likes(section_id), False
-
-    @staticmethod
-    def close_db(e=None):
-        db = g.pop('db', None)
-        if db is not None:
-            db.close()
