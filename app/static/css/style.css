@@ -1,0 +1,434 @@
+/* --- Design System & Theme Custom Variables --- */
+:root {
+    /* Color Palette - Warm Editorial Parchment (Light Mode) */
+    --bg-color: #faf6f0;
+    --sidebar-bg: #f4eee3;
+    --text-color: #2c2a29;
+    --text-secondary: #6e675f;
+    --border-color: #e5decb;
+    --accent-color: #b35933; /* Soft Rust */
+    --accent-hover: #9c4c2a;
+    --accent-muted: rgba(179, 89, 51, 0.1);
+    --hover-bg: #ece5d3;
+    
+    /* Typography */
+    --font-serif: "Noto Serif Ethiopic", Georgia, "Times New Roman", serif;
+    --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+    
+    /* Layout Dimensions */
+    --sidebar-width: 280px;
+    --header-height: 60px;
+    --max-text-width: 68ch;
+    
+    /* Transitions */
+    --transition-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Variables - Deep Charcoal Warm */
+[data-theme="dark"] {
+    --bg-color: #161615;
+    --sidebar-bg: #1f1f1e;
+    --text-color: #e6e1da;
+    --text-secondary: #99938a;
+    --border-color: #2e2e2c;
+    --accent-color: #e57e50; /* Brighter Warm Rust */
+    --accent-hover: #f0956c;
+    --accent-muted: rgba(229, 126, 80, 0.15);
+    --hover-bg: #2c2c2a;
+}
+
+/* --- Base Resets & Typography --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+/* --- App Shell & Layout Structure --- */
+.app-container {
+    display: flex;
+    height: 100%;
+    position: relative;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100%;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    transition: transform var(--transition-smooth), background-color var(--transition-smooth), border-color var(--transition-smooth);
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color var(--transition-smooth);
+}
+
+.sidebar-header h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-color);
+}
+
+.sidebar-header p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0.75rem 0.5rem;
+}
+
+/* Fine-tuned Scrollbars */
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+    transition: background-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+.sidebar-link:hover {
+    background-color: var(--hover-bg);
+}
+
+.sidebar-link.active {
+    background-color: var(--accent-muted);
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* Law Content Indicators (dots) */
+.law-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.law-dot.filled {
+    background-color: var(--accent-color);
+    opacity: 0.8;
+}
+.law-dot.empty {
+    border: 1px solid var(--text-secondary);
+    opacity: 0.4;
+}
+
+/* Main workspace area */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Top bar navigation */
+.top-bar {
+    height: var(--header-height);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    background-color: var(--bg-color);
+    z-index: 5;
+    transition: background-color var(--transition-smooth), border-color var(--transition-smooth);
+}
+
+.left-bar-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-text {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    display: none; /* Only visible when sidebar is collapsed */
+}
+
+.sidebar-collapsed .logo-text {
+    display: inline-block;
+}
+
+/* Quiet Icon Buttons */
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+.icon-btn:hover {
+    background-color: var(--hover-bg);
+}
+
+/* Book Reader Viewport */
+.reader-viewport {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 2.5rem 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.reader-container {
+    width: 100%;
+    max-width: var(--max-text-width);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Reader Typography Header */
+.reader-header {
+    margin-bottom: 2rem;
+}
+
+.law-badge {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-color);
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.law-title {
+    font-family: var(--font-serif);
+    font-size: 2.25rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--text-color);
+}
+
+/* Inline Reading Controls bar */
+.reader-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2.5rem;
+    transition: border-color var(--transition-smooth);
+    flex-wrap: wrap;
+}
+
+/* Control Buttons styling */
+.control-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background-color var(--transition-smooth), border-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+.control-btn:hover:not(:disabled) {
+    background-color: var(--hover-bg);
+}
+
+.control-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Heart like states */
+.control-btn.liked {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background-color: var(--accent-muted);
+}
+.control-btn.liked .heart-svg {
+    fill: var(--accent-color);
+}
+
+/* Audio active reading states */
+.control-btn.playing {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background-color: var(--accent-muted);
+}
+
+/* Book Content Body styling */
+.reader-body {
+    font-family: var(--font-serif);
+    font-size: 1.18rem;
+    line-height: 1.85;
+    color: var(--text-color);
+    text-align: justify;
+    word-break: break-word;
+    letter-spacing: 0.01em;
+}
+
+.reader-body p {
+    margin-bottom: 1.5rem;
+}
+
+/* Coming soon placeholder */
+.reader-body.coming-soon {
+    font-family: var(--font-sans);
+    font-style: italic;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 4rem 1.5rem;
+    background-color: var(--sidebar-bg);
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+    transition: background-color var(--transition-smooth), border-color var(--transition-smooth);
+}
+
+/* Toast Message Toast notifications */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: var(--text-color);
+    color: var(--bg-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* --- Layout Responsiveness Styles --- */
+
+/* Desktop view: sidebar collapse behavior */
+.sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+    position: absolute;
+}
+.sidebar-collapsed .main-content {
+    margin-left: 0;
+}
+
+/* Adaptive mobile layout (< 768px) */
+@media (max-width: 767px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Overlay background when mobile sidebar is active */
+    .app-container::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: 8;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-smooth);
+    }
+    
+    .sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+    
+    .sidebar-open.app-container::after {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    .logo-text {
+        display: inline-block;
+    }
+    
+    .reader-viewport {
+        padding: 1.5rem 1rem;
+    }
+    
+    .law-title {
+        font-size: 1.8rem;
+    }
+    
+    .reader-controls {
+        gap: 0.5rem;
+    }
+    
+    .control-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        flex-grow: 1;
+        justify-content: center;
+    }
+}

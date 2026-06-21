@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">{{ active_section.label }}{% if active_section.title %} - {{ active_section.title }}{% else %} - በቅርብ ቀን (Coming soon){% endif %} | 48ቱ የሥልጣን ሕጎች</title>
+    <meta name="description" content="48ቱ የሥልጣን ሕጎች (The 48 Laws of Power) Amharic translation and audio reader interface. Explore and listen to the laws in Amharic.">
+    
+    <!-- Google Fonts for Editorial Typography and Ethiopic Characters -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Ethiopic:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- App Shell Container -->
+    <div class="app-container">
+        <!-- Sidebar Navigation Drawer -->
+        <aside class="sidebar" id="sidebar" aria-label="Laws navigation">
+            <div class="sidebar-header">
+                <h2>48ቱ የሥልጣን ሕጎች</h2>
+                <p>The 48 Laws of Power</p>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    {% for sec in sections %}
+                    <li>
+                        <a href="/?law={{ sec.id }}" 
+                           class="sidebar-link {% if sec.id == active_section.id %}active{% endif %}" 
+                           data-id="{{ sec.id }}"
+                           id="sidebar-law-{{ sec.id }}">
+                            <span class="law-number">Law {{ sec.id }}</span>
+                            {% if sec.title %}
+                            <span class="law-dot filled" title="Content available"></span>
+                            {% else %}
+                            <span class="law-dot empty" title="Coming soon"></span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <div class="main-content">
+            <!-- Top Quiet Controls bar -->
+            <header class="top-bar">
+                <div class="left-bar-controls">
+                    <button class="icon-btn" id="sidebar-toggle" aria-label="Toggle Sidebar" title="Toggle Sidebar">
+                        <!-- Menu Hamburguer SVG -->
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <span class="logo-text">48ቱ የሥልጣን ሕጎች</span>
+                </div>
+                <div class="right-bar-controls">
+                    <button class="icon-btn" id="theme-toggle" aria-label="Toggle Reading Mode" title="Toggle Light/Dark Theme">
+                        <!-- Moon SVG -->
+                        <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <!-- Sun SVG -->
+                        <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Book Reader Viewport -->
+            <article class="reader-viewport" id="reader-viewport">
+                <div class="reader-container">
+                    <!-- Heading -->
+                    <div class="reader-header">
+                        <span class="law-badge" id="view-law-label">{{ active_section.label }}</span>
+                        <h1 class="law-title" id="view-law-title">
+                            {% if active_section.title %}
+                                {{ active_section.title }}
+                            {% else %}
+                                በቅርብ ቀን (Coming soon)
+                            {% endif %}
+                        </h1>
+                    </div>
+
+                    <!-- Quiet Inline Reading Controls -->
+                    <div class="reader-controls">
+                        <!-- Like Action Button -->
+                        <button class="control-btn {% if has_liked %}liked{% endif %}" id="like-btn" aria-label="Like Law" title="Like this law">
+                            <span class="btn-icon">
+                                <!-- Heart SVG -->
+                                <svg class="heart-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </span>
+                            <span class="btn-text" id="likes-count">{{ likes_count }}</span>
+                        </button>
+
+                        <!-- Gemini TTS Audio Button -->
+                        <button class="control-btn" id="audio-btn" 
+                                {% if not active_section.body %}disabled{% endif %} 
+                                aria-label="Listen aloud" 
+                                title="{% if active_section.body %}Listen to this law aloud in Amharic{% else %}Audio reader unavailable for coming soon sections{% endif %}">
+                            <span class="btn-icon" id="audio-icon-container">
+                                <!-- Speaker Play SVG -->
+                                <svg class="speaker-play-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                </svg>
+                            </span>
+                            <span class="btn-text" id="audio-btn-text">አድምጥ (Listen)</span>
+                        </button>
+
+                        <!-- Share Action Button -->
+                        <button class="control-btn" id="share-btn" aria-label="Share Law" title="Copy shareable link">
+                            <span class="btn-icon">
+                                <!-- Link/Share SVG -->
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                </svg>
+                            </span>
+                            <span class="btn-text" id="share-btn-text">አጋራ (Share)</span>
+                        </button>
+                    </div>
+
+                    <!-- Editorial Content Body -->
+                    <div class="reader-body {% if not active_section.body %}coming-soon{% endif %}" id="view-law-body">
+                        {% if active_section.body %}
+                            {{ active_section.body }}
+                        {% else %}
+                            ይህ ክፍል ገና አልተተረጎመም። በቅርቡ ይደርሳል! (This law has not been translated yet. Coming soon!)
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Hidden audio element for TTS playback -->
+    <audio id="tts-audio-player" style="display: none;"></audio>
+
+    <!-- Visual non-intrusive toast notifications -->
+    <div id="toast-notification" class="toast" role="alert" aria-live="polite"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
