@@ -57,7 +57,7 @@ class TTSService:
         
         # Ensure cache directory exists
         os.makedirs(self.cache_dir, exist_ok=True)
-        cache_file_path = os.path.join(self.cache_dir, f"{text_hash}.wav")
+        cache_file_path = os.path.join(self.cache_dir, f"{text_hash}.mp3")
 
         # Cache Hit
         if os.path.exists(cache_file_path):
