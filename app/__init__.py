@@ -4,6 +4,7 @@ from flask import Flask, request, g
 from app.services.content import ContentService
 from app.services.likes import LikesService
 from app.services.tts import TTSService
+from app.services.user import UserService
 
 def create_app(test_config=None):
     # Initialize the Flask application
@@ -28,11 +29,13 @@ def create_app(test_config=None):
     content_service = ContentService(data_path=app.config['CONTENT_JSON_PATH'])
     likes_service = LikesService(db_path=app.config['DATABASE_PATH'])
     tts_service = TTSService(cache_dir=app.config['AUDIO_CACHE_DIR'])
+    user_service = UserService(db_path=app.config['DATABASE_PATH'])
     
     # Store services on the app object for easy retrieval in blueprints/routes
     app.content_service = content_service
     app.likes_service = likes_service
     app.tts_service = tts_service
+    app.user_service = user_service
 
     # Register context teardown for database connections
     app.teardown_appcontext(LikesService.close_db)

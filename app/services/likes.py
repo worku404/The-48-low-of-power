@@ -36,6 +36,23 @@ class LikesService:
                 PRIMARY KEY (visitor_cookie, section_id)
             )
         """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS user_progress (
+                username TEXT NOT NULL,
+                law_id INTEGER NOT NULL,
+                completed INTEGER DEFAULT 1,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (username, law_id),
+                FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+            )
+        """)
         db.commit()
 
     def get_likes(self, section_id):
