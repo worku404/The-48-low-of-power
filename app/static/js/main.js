@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let completedLaws = new Set();
     let isLoggedIn = false;
     let username = "";
+    let currentLang = localStorage.getItem('lang') || 'am';
 
     // --- DOM Elements ---
     const appContainer = document.querySelector('.app-container');
@@ -34,9 +35,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const audioPlayer = document.getElementById('tts-audio-player');
     const toast = document.getElementById('toast-notification');
     const readerViewport = document.getElementById('reader-viewport');
+    
+    const langBtn = document.getElementById('lang-btn');
+    const langBtnText = document.getElementById('lang-btn-text');
 
-    // --- Theme Management ---
+    // --- Theme & Language Management ---
     initializeTheme();
+    updateLanguageUI();
+    updateGlobalStaticTexts();
+
+    langBtn.addEventListener('click', () => {
+        currentLang = currentLang === 'en' ? 'am' : 'en';
+        localStorage.setItem('lang', currentLang);
+        updateLanguageUI();
+        updateGlobalStaticTexts();
+        loadLaw(currentLawId);
+    });
+
+    function updateLanguageUI() {
+        if (currentLang === 'en') {
+            langBtnText.textContent = 'አማርኛ';
+            langBtn.setAttribute('title', 'Switch to Amharic / ወደ አማርኛ ቀይር');
+            document.documentElement.setAttribute('lang', 'en');
+        } else {
+            langBtnText.textContent = 'English';
+            langBtn.setAttribute('title', 'Switch to English / ወደ እንግሊዝኛ ቀይር');
+            document.documentElement.setAttribute('lang', 'am');
+        }
+    }
+
+    function updateGlobalStaticTexts() {
+        const logoText = document.querySelector('.logo-text');
+        const sidebarHeaderH2 = document.querySelector('.sidebar-header h2');
+        const sidebarHeaderP = document.querySelector('.sidebar-header p');
+        const shareBtnText = document.getElementById('share-btn-text');
+        
+        if (currentLang === 'en') {
+            if (logoText) logoText.textContent = 'The 48 Laws of Power';
+            if (sidebarHeaderH2) sidebarHeaderH2.textContent = 'The 48 Laws of Power';
+            if (sidebarHeaderP) sidebarHeaderP.textContent = '48ቱ የሥልጣን ሕጎች';
+            if (shareBtnText) shareBtnText.textContent = 'Share';
+        } else {
+            if (logoText) logoText.textContent = '48ቱ የሥልጣን ሕጎች';
+            if (sidebarHeaderH2) sidebarHeaderH2.textContent = '48ቱ የሥልጣን ሕጎች';
+            if (sidebarHeaderP) sidebarHeaderP.textContent = 'The 48 Laws of Power';
+            if (shareBtnText) shareBtnText.textContent = 'አጋራ (Share)';
+        }
+        
+        renderUserProgressContainer();
+    }
 
     themeToggle.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -121,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audioIsPaused = false;
 
         try {
-            const response = await fetch(`/api/sections/${lawId}`);
+            const response = await fetch(`/api/sections/${lawId}?lang=${currentLang}`);
             if (!response.ok) {
                 throw new Error('Section details failed to load.');
             }
@@ -139,19 +186,36 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (data.title) {
                 viewLawTitle.textContent = data.title;
-                pageTitle.textContent = `${data.label} - ${data.title} | 48ቱ የሥልጣን ሕጎች`;
+                if (currentLang === 'en') {
+                    pageTitle.textContent = `${data.label} - ${data.title} | The 48 Laws of Power`;
+                } else {
+                    pageTitle.textContent = `${data.label} - ${data.title} | 48ቱ የሥልጣን ሕጎች`;
+                }
             } else {
-                viewLawTitle.textContent = 'በቅርብ ቀን (Coming soon)';
-                pageTitle.textContent = `${data.label} - በቅርብ ቀን (Coming soon) | 48ቱ የሥልጣን ሕጎች`;
+                if (currentLang === 'en') {
+                    viewLawTitle.textContent = 'Coming soon';
+                    pageTitle.textContent = `${data.label} - Coming soon | The 48 Laws of Power`;
+                } else {
+                    viewLawTitle.textContent = 'በቅርብ ቀን (Coming soon)';
+                    pageTitle.textContent = `${data.label} - በቅርብ ቀን (Coming soon) | 48ቱ የሥልጣን ሕጎች`;
+                }
             }
 
             if (data.body) {
                 viewLawBody.innerHTML = `<p>${data.body.replace(/\n\n/g, '</p><p>')}</p>`;
                 viewLawBody.classList.remove('coming-soon');
                 audioBtn.removeAttribute('disabled');
-                audioBtn.setAttribute('title', 'Listen to this law aloud in Amharic');
+                if (currentLang === 'en') {
+                    audioBtn.setAttribute('title', 'Listen to this law aloud in English');
+                } else {
+                    audioBtn.setAttribute('title', 'Listen to this law aloud in Amharic');
+                }
             } else {
-                viewLawBody.innerHTML = 'ይህ ክፍል ገና አልተተረጎመም። በቅርቡ ይደርሳል! (This law has not been translated yet. Coming soon!)';
+                if (currentLang === 'en') {
+                    viewLawBody.innerHTML = 'This law has not been translated yet. Coming soon!';
+                } else {
+                    viewLawBody.innerHTML = 'ይህ ክፍል ገና አልተተረጎመም። በቅርቡ ይደርሳል! (This law has not been translated yet. Coming soon!)';
+                }
                 viewLawBody.classList.add('coming-soon');
                 audioBtn.setAttribute('disabled', 'true');
                 audioBtn.setAttribute('title', 'Audio reader unavailable for coming soon sections');
@@ -197,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Likes Action API ---
     likeBtn.addEventListener('click', async () => {
         if (likeBtn.classList.contains('liked')) {
-            showToast('ይህንን ሕግ ቀድመው ወድደውታል (You already liked this law)');
+            showToast(currentLang === 'en' ? 'You already liked this law' : 'ይህንን ሕግ ቀድመው ወድደውታል (You already liked this law)');
             return;
         }
 
@@ -217,10 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
             likesCountEl.textContent = data.likes;
             likeBtn.classList.add('liked');
             likeBtn.setAttribute('title', 'You have liked this law');
-            showToast('ሕጉን ወድደውታል! (You liked this law!)');
+            showToast(currentLang === 'en' ? 'You liked this law!' : 'ሕጉን ወድደውታል! (You liked this law!)');
         } catch (error) {
             console.error('Error liking section:', error);
-            showToast('ምርጫ ማዘመን አልተቻለም (Failed to submit like)');
+            showToast(currentLang === 'en' ? 'Failed to submit like' : 'ምርጫ ማዘመን አልተቻለም (Failed to submit like)');
         }
     });
 
@@ -238,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function playAudio() {
         isLoadingAudio = true;
         audioBtn.classList.add('playing');
-        audioBtnText.textContent = 'በማዘጋጀት ላይ... (Generating...)';
+        audioBtnText.textContent = currentLang === 'en' ? 'Generating...' : 'በማዘጋጀት ላይ... (Generating...)';
         
         // Show indicator in icon
         audioIconContainer.innerHTML = `
@@ -252,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         try {
-            const audioSrc = `/api/sections/${currentLawId}/audio`;
+            const audioSrc = `/api/sections/${currentLawId}/audio?lang=${currentLang}`;
             audioPlayer.src = audioSrc;
             
             // Preload and verify availability
@@ -267,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isLoadingAudio = false;
             isPlaying = true;
             audioIsPaused = false;
-            audioBtnText.textContent = 'ቆም አድርግ (Pause)';
+            audioBtnText.textContent = currentLang === 'en' ? 'Pause' : 'ቆም አድርግ (Pause)';
             
             // Update to Pause symbol SVG
             audioIconContainer.innerHTML = `
@@ -282,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error starting audio playback:', error);
             stopAudio();
-            showToast('የንባብ ድምጽ ማመንጨት አልተቻለም (Audio generation failed)');
+            showToast(currentLang === 'en' ? 'Audio generation failed' : 'የንባብ ድምጽ ማመንጨት አልተቻለም (Audio generation failed)');
         }
     }
 
@@ -293,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         audioBtn.classList.remove('playing');
         audioBtn.classList.add('paused');
-        audioBtnText.textContent = 'ቀጥል (Resume)';
+        audioBtnText.textContent = currentLang === 'en' ? 'Resume' : 'ቀጥል (Resume)';
         
         // Show standard Play Speaker SVG
         audioIconContainer.innerHTML = `
@@ -309,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         audioBtn.classList.add('playing');
         audioBtn.classList.remove('paused');
-        audioBtnText.textContent = 'ቆም አድርግ (Pause)';
+        audioBtnText.textContent = currentLang === 'en' ? 'Pause' : 'ቆም አድርግ (Pause)';
         
         // Show Pause symbol SVG
         audioIconContainer.innerHTML = `
@@ -336,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         audioBtn.classList.remove('playing');
         audioBtn.classList.remove('paused');
-        audioBtnText.textContent = 'አድምጥ (Listen)';
+        audioBtnText.textContent = currentLang === 'en' ? 'Listen' : 'አድምጥ (Listen)';
         
         // Reset to standard Play Speaker SVG
         audioIconContainer.innerHTML = `
@@ -456,9 +520,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Alert user
         if (method === "timer") {
-            showToast(`ሕግ ${currentLawId} ተጠናቋል! (Law ${currentLawId} completed by staying!)`);
+            showToast(currentLang === 'en' 
+                ? `Law ${currentLawId} completed by staying!` 
+                : `ሕግ ${currentLawId} ተጠናቋል! (Law ${currentLawId} completed by staying!)`);
         } else {
-            showToast(`ሕግ ${currentLawId} ተጠናቋል! (Law ${currentLawId} completed by scrolling!)`);
+            showToast(currentLang === 'en' 
+                ? `Law ${currentLawId} completed by scrolling!` 
+                : `ሕግ ${currentLawId} ተጠናቋል! (Law ${currentLawId} completed by scrolling!)`);
         }
     }
 
@@ -472,7 +540,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const percent = Math.min(100, Math.round((completedCount / totalLaws) * 100));
 
         fillEl.style.width = `${percent}%`;
-        textEl.textContent = `${percent}% completed (${completedCount}/${totalLaws})`;
+        textEl.textContent = currentLang === 'en' 
+            ? `${percent}% completed (${completedCount}/${totalLaws})`
+            : `${percent}% ተጠናቋል (${completedCount}/${totalLaws})`;
     }
 
     function syncSidebarCompletion() {
@@ -659,16 +729,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isLoggedIn) {
             container.setAttribute('data-logged-in', 'true');
+            const welcomeText = currentLang === 'en' 
+                ? `Welcome, <strong id="logged-username">${username}</strong>` 
+                : `እንኳን ደህና መጡ፣ <strong id="logged-username">${username}</strong>`;
+            const logoutText = currentLang === 'en' ? 'Logout' : 'ውጣ (Logout)';
+            const progressText = currentLang === 'en' ? '0% completed' : '0% ተጠናቋል';
             container.innerHTML = `
                 <div class="user-info">
-                    <span class="user-welcome">እንኳን ደህና መጡ፣ <strong id="logged-username">${username}</strong></span>
-                    <button class="logout-link-btn" id="logout-btn">ውጣ (Logout)</button>
+                    <span class="user-welcome">${welcomeText}</span>
+                    <button class="logout-link-btn" id="logout-btn">${logoutText}</button>
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-tube">
                         <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
                     </div>
-                    <span class="progress-percentage-text" id="progress-percentage-text">0% completed</span>
+                    <span class="progress-percentage-text" id="progress-percentage-text">${progressText}</span>
                 </div>
             `;
             // Attach event listener
@@ -676,9 +751,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateProgressUI();
         } else {
             container.setAttribute('data-logged-in', 'false');
+            const loginText = currentLang === 'en' 
+                ? 'Login to save progress' 
+                : 'እድገትዎን ለማስቀመጥ ይግቡ (Login to save progress)';
             container.innerHTML = `
                 <div class="anon-progress-info">
-                    <button class="login-link-btn" id="open-login-btn">እድገትዎን ለማስቀመጥ ይግቡ (Login to save progress)</button>
+                    <button class="login-link-btn" id="open-login-btn">${loginText}</button>
                 </div>
             `;
             document.getElementById('open-login-btn').addEventListener('click', openAuthModal);
@@ -717,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch initial law duration to start the timer correctly on DOM load
     async function fetchInitialLawDuration(lawId) {
         try {
-            const response = await fetch(`/api/sections/${lawId}`);
+            const response = await fetch(`/api/sections/${lawId}?lang=${currentLang}`);
             if (response.ok) {
                 const data = await response.json();
                 currentAudioDuration = data.audio_duration;

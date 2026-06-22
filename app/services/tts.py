@@ -1,5 +1,8 @@
 import os
 import hashlib
+import subprocess
+import tempfile
+import shutil
 from google import genai
 from google.genai import types
 
@@ -43,10 +46,27 @@ class TTSService:
             self._client = genai.Client(api_key=api_key)
         return self._client
 
-    def get_audio_path(self, text):
+    def _get_ffmpeg_path(self):
+        """Attempts to locate the ffmpeg.exe executable path."""
+        # 1. Environment variable FFMPEG_PATH
+        env_path = os.environ.get("FFMPEG_PATH")
+        if env_path and os.path.exists(env_path):
+            return env_path
+        # 2. Hardcoded user path for e-learning tools
+        user_path = r"C:\Users\hi\Downloads\webdev\Django_Projects\e-learning\tools\ffmpeg\ffmpeg-8.1-essentials_build\bin\ffmpeg.exe"
+        if os.path.exists(user_path):
+            return user_path
+        # 3. Path resolution via shutil.which
+        sys_path = shutil.which("ffmpeg")
+        if sys_path:
+            return sys_path
+        return None
+
+    def get_audio_path(self, text, lang='am'):
         """
         Computes SHA256 of the text, checks if audio is cached,
-        generates and caches it if missing, and returns the absolute file path.
+        generates and caches it if missing (converting to real MP3 if ffmpeg is available),
+        and returns the absolute file path.
         """
         if not text or not text.strip():
             raise EmptyContentError("Cannot generate TTS audio for empty content.")
@@ -65,6 +85,15 @@ class TTSService:
 
         # Cache Miss - Generate using Gemini API
         client = self._get_client()
+        
+        # Determine voice and prompt based on language
+        if lang == 'en':
+            voice = "Puck"
+            prompt = f"Please read the following English text aloud exactly as written, with clear, natural pronunciation:\n\n{text}"
+        else:
+            voice = self.voice_name
+            prompt = f"Please read the following Amharic text aloud exactly as written, with clear, natural pronunciation:\n\n{text}"
+
         try:
             # Configure request for audio output modality
             config = types.GenerateContentConfig(
@@ -72,14 +101,13 @@ class TTSService:
                 speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name=self.voice_name
+                            voice_name=voice
                         )
                     )
                 ),
             )
 
             # Invoke model for text recitation
-            prompt = f"Please read the following Amharic text aloud exactly as written, with clear, natural pronunciation:\n\n{text}"
             response = client.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
@@ -117,11 +145,33 @@ class TTSService:
                 wav_file.setframerate(24000)   # 24 kHz sample rate
                 wav_file.writeframes(pcm_data)
 
-            # Atomically write the completed WAV buffer to disk
             wav_bytes = wav_buffer.getvalue()
-            os.makedirs(self.cache_dir, exist_ok=True)
-            with open(cache_file_path, 'wb') as f:
-                f.write(wav_bytes)
+
+            ffmpeg_path = self._get_ffmpeg_path()
+            if ffmpeg_path:
+                # Convert the WAV bytes to a real compressed MP3 file using ffmpeg
+                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_wav:
+                    temp_wav.write(wav_bytes)
+                    temp_wav_path = temp_wav.name
+
+                try:
+                    # Run ffmpeg to encode the temporary WAV into 48kbps MP3
+                    cmd = [
+                        ffmpeg_path,
+                        "-y",
+                        "-i", temp_wav_path,
+                        "-codec:a", "libmp3lame",
+                        "-b:a", "48k",
+                        cache_file_path
+                    ]
+                    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                finally:
+                    if os.path.exists(temp_wav_path):
+                        os.unlink(temp_wav_path)
+            else:
+                # Fallback to saving WAV format directly inside the file (named .mp3 for backward compatibility)
+                with open(cache_file_path, 'wb') as f:
+                    f.write(wav_bytes)
 
             return cache_file_path
 

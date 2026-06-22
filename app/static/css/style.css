@@ -794,3 +794,13 @@ body {
 .submit-auth-btn:active {
     transform: scale(0.98);
 }
+
+/* Language Switcher Styling */
+#lang-btn {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+#lang-btn:hover {
+    background-color: var(--accent-muted);
+}

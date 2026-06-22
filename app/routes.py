@@ -46,7 +46,8 @@ def index():
 
 @bp.route('/api/sections/<int:section_id>')
 def get_section_api(section_id):
-    section = current_app.content_service.get_section(section_id)
+    lang = request.args.get('lang', 'am')
+    section = current_app.content_service.get_section(section_id, lang=lang)
     if not section:
         return jsonify({'error': 'Section not found'}), 404
 
@@ -60,12 +61,18 @@ def get_section_api(section_id):
     if body_text:
         text_utf8 = body_text.encode('utf-8')
         text_hash = hashlib.sha256(text_utf8).hexdigest()
-        cache_file_path = os.path.join(current_app.config['AUDIO_CACHE_DIR'], f"{text_hash}.mp3")
+        # Choose the correct cache directory based on language
+        if lang == 'en':
+            cache_dir = current_app.config['AUDIO_CACHE_DIR_EN']
+        else:
+            cache_dir = current_app.config['AUDIO_CACHE_DIR']
+        cache_file_path = os.path.join(cache_dir, f"{text_hash}.mp3")
         if os.path.exists(cache_file_path):
             try:
-                # Estimate duration based on 48kbps bitrate size
+                # Estimate duration: 64 kbps = 8 kB/s (English), 48 kbps = 6 kB/s (Amharic)
                 file_size = os.path.getsize(cache_file_path)
-                duration = file_size / 6000.0  # 48kbits/s = 6kbytes/s
+                bytes_per_sec = 8000.0 if lang == 'en' else 6000.0
+                duration = file_size / bytes_per_sec
             except Exception:
                 pass
         if not duration:
@@ -79,7 +86,7 @@ def get_section_api(section_id):
         'label': section['label'],
         'title': section['title'],
         'body': section['body'],
-        'language': section['language'],
+        'language': section.get('language', lang),
         'likes': likes_count,
         'liked': has_liked,
         'audio_duration': duration
@@ -104,28 +111,38 @@ def like_section_api(section_id):
 
 @bp.route('/api/sections/<int:section_id>/audio')
 def get_section_audio_api(section_id):
-    section = current_app.content_service.get_section(section_id)
+    lang = request.args.get('lang', 'am')
+    section = current_app.content_service.get_section(section_id, lang=lang)
     if not section:
         return jsonify({'error': 'Section not found'}), 404
 
     body_text = section.get('body', '').strip()
     if not body_text:
-        return jsonify({'error': 'Cannot generate audio for empty content (Coming soon)'}), 400
+        return jsonify({'error': 'Cannot generate audio for empty content'}), 400
 
+    # ── English: serve pre-generated Azure TTS file from audio_cache_en ──────
+    if lang == 'en':
+        text_hash = hashlib.sha256(body_text.encode('utf-8')).hexdigest()
+        cache_dir = current_app.config['AUDIO_CACHE_DIR_EN']
+        audio_path = os.path.join(cache_dir, f"{text_hash}.mp3")
+        if os.path.exists(audio_path):
+            return send_file(audio_path, mimetype='audio/mpeg', as_attachment=False)
+        return jsonify({
+            'error': 'English audio for this law has not been generated yet.',
+            'details': 'EN_AUDIO_NOT_READY'
+        }), 503
+
+    # ── Amharic: on-demand Gemini TTS (existing behaviour) ───────────────────
     try:
-        # Call TTS service (resolves cache check and Gemini call)
-        audio_path = current_app.tts_service.get_audio_path(body_text)
-        
+        audio_path = current_app.tts_service.get_audio_path(body_text, lang=lang)
         mimetype = 'audio/mpeg' if audio_path.endswith('.mp3') else 'audio/wav'
         return send_file(audio_path, mimetype=mimetype, as_attachment=False)
-        
+
     except EmptyContentError as e:
         return jsonify({'error': str(e)}), 400
     except MissingAPIKeyError as e:
-        # 503 Service Unavailable, custom header indicating missing API setup
         return jsonify({'error': str(e), 'details': 'TTS_KEY_MISSING'}), 503
     except GeminiAPIError as e:
-        # 502 Bad Gateway
         return jsonify({'error': str(e)}), 502
     except Exception as e:
         return jsonify({'error': f"An unexpected audio retrieval error occurred: {str(e)}"}), 500

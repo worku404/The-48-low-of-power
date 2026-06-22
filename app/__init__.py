@@ -15,7 +15,9 @@ def create_app(test_config=None):
     app.config.from_mapping(
         DATABASE_PATH=os.path.join(app.instance_path, 'likes.sqlite3'),
         AUDIO_CACHE_DIR=os.path.join(app.instance_path, 'audio_cache'),
+        AUDIO_CACHE_DIR_EN=os.path.join(app.instance_path, 'audio_cache_en'),
         CONTENT_JSON_PATH=os.path.join(app.root_path, '..', 'data', 'sections.json'),
+        CONTENT_EN_JSON_PATH=os.path.join(app.root_path, '..', 'data', 'sections_en.json'),
         SECRET_KEY='dev-key-placeholder-for-session-fallback',
         DATABASE_URL=os.environ.get('DATABASE_URL')
     )
@@ -26,13 +28,17 @@ def create_app(test_config=None):
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
     os.makedirs(app.config['AUDIO_CACHE_DIR'], exist_ok=True)
+    os.makedirs(app.config['AUDIO_CACHE_DIR_EN'], exist_ok=True)
 
     # Initialize Services and attach to app context or app config
     db_service = DatabaseService(
         db_path=app.config['DATABASE_PATH'],
         database_url=app.config.get('DATABASE_URL')
     )
-    content_service = ContentService(data_path=app.config['CONTENT_JSON_PATH'])
+    content_service = ContentService(
+        data_path=app.config['CONTENT_JSON_PATH'],
+        data_path_en=app.config.get('CONTENT_EN_JSON_PATH')
+    )
     likes_service = LikesService(db_service=db_service)
     tts_service = TTSService(cache_dir=app.config['AUDIO_CACHE_DIR'])
     user_service = UserService(db_service=db_service)
