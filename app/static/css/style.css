@@ -810,12 +810,44 @@ body {
     transform: scale(0.98);
 }
 
-/* Language Switcher Styling */
-#lang-btn {
-    border-color: var(--accent-color);
-    color: var(--accent-color);
+/* ── Sidebar chevron icons ────────────────────────────────────────────────── */
+/* Desktop default: sidebar is open → show << (close) icon */
+.sidebar-chevron-close { display: block; }
+.sidebar-chevron-open  { display: none;  }
+
+/* Desktop collapsed: sidebar hidden → show >> (open) icon */
+.sidebar-collapsed .sidebar-chevron-close { display: none;  }
+.sidebar-collapsed .sidebar-chevron-open  { display: block; }
+
+/* Mobile default: sidebar is hidden → show >> (open) icon */
+@media (max-width: 767px) {
+    .sidebar-chevron-close { display: none;  }
+    .sidebar-chevron-open  { display: block; }
+
+    /* Mobile open: sidebar visible → show << (close) icon */
+    .sidebar-open .sidebar-chevron-close { display: block; }
+    .sidebar-open .sidebar-chevron-open  { display: none;  }
 }
 
-#lang-btn:hover {
-    background-color: var(--accent-muted);
+/* ── Header language toggle pill ─────────────────────────────────────────── */
+.lang-header-btn {
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    padding: 0.22rem 0.5rem;
+    border: 1.5px solid var(--accent-color);
+    border-radius: 4px;
+    color: var(--accent-color);
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+    min-width: 2rem;
+    text-align: center;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+.lang-header-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
 }

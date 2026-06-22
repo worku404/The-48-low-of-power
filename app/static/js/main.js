@@ -54,11 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateLanguageUI() {
         if (currentLang === 'en') {
-            langBtnText.textContent = 'አማርኛ';
-            langBtn.setAttribute('title', 'Switch to Amharic / ወደ አማርኛ ቀይር');
+            langBtnText.textContent = 'አማ';
+            langBtn.setAttribute('title', 'ወደ አማርኛ ቀይር (Switch to Amharic)');
             document.documentElement.setAttribute('lang', 'en');
         } else {
-            langBtnText.textContent = 'English';
+            langBtnText.textContent = 'EN';
             langBtn.setAttribute('title', 'Switch to English / ወደ እንግሊዝኛ ቀይር');
             document.documentElement.setAttribute('lang', 'am');
         }
