@@ -83,12 +83,12 @@ jobs:
           inlineScript: |
             echo "Fetching all potential outbound IPs for the-48-low-of-power..."
             
-            # 1. Fetch the outbound IP addresses array from Azure
-            IP_LIST=$(az webapp show --name the-48-low-of-power --resource-group the-48-low-of-power_group --query "possibleOutboundIpAddresses" -o tsv)
+            # 1. Fetch IPs and replace commas with spaces using 'tr'
+            IP_LIST=$(az webapp show --name the-48-low-of-power --resource-group the-48-low-of-power_group --query "possibleOutboundIpAddresses" -o tsv | tr ',' ' ')
             
-            echo "Updating NSG rule 'AllowPostgres5432' with fresh IPs..."
+            echo "Updating NSG rule 'AllowPostgres5432' with fresh space-separated IPs..."
             
-            # 2. Automatically overwrite the source address spaces in your NSG rule
+            # 2. Update your NSG rule with the clean space-separated list
             az network nsg rule update \
               --resource-group gold-e-learning_group \
               --nsg-name gold-e-learning-nsg \
