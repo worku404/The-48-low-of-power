@@ -140,8 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const sectionId = parseInt(link.getAttribute('data-id'));
-            loadLaw(sectionId);
-            
+
+            // Show spinner on this link's dot immediately
+            const dot = link.querySelector('.law-dot');
+            if (dot) dot.classList.add('loading');
+
+            loadLaw(sectionId, true, dot);
+
             // On mobile, automatically dismiss the sidebar drawer
             if (window.innerWidth < 768) {
                 appContainer.classList.remove('sidebar-open');
@@ -161,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return law ? parseInt(law, 10) : null;
     }
 
-    async function loadLaw(lawId, pushState = true) {
+    async function loadLaw(lawId, pushState = true, loadingDot = null) {
         if (isPlaying || isLoadingAudio || audioIsPaused) {
             stopAudio();
         }
@@ -255,6 +260,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error loading law:', error);
             showToast('የሕግ ይዘት መጫን አልተቻለም (Failed to load content)');
+        } finally {
+            // Remove spinner from the dot that triggered this load
+            if (loadingDot) loadingDot.classList.remove('loading');
         }
     }
 

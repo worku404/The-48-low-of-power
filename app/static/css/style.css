@@ -164,6 +164,21 @@ body {
     opacity: 0.4;
 }
 
+/* Spinner: replaces dot while a sidebar law is loading */
+@keyframes dot-spin {
+    to { transform: rotate(360deg); }
+}
+
+.law-dot.loading {
+    width: 10px;
+    height: 10px;
+    background: transparent !important;
+    border: 1.5px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    opacity: 1 !important;
+    animation: dot-spin 0.65s linear infinite;
+}
+
 /* Main workspace area */
 .main-content {
     flex-grow: 1;
