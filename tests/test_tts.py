@@ -63,12 +63,18 @@ def test_tts_cache_miss_and_hit(mock_client_class, app):
         # 1. First Call: Cache Miss (API is called)
         path1 = service.get_audio_path(text)
         assert os.path.exists(path1)
-        import wave
-        with wave.open(path1, 'rb') as f:
-            assert f.getnchannels() == 1
-            assert f.getsampwidth() == 2
-            assert f.getframerate() == 24000
-            assert f.readframes(f.getnframes()) == expected_bytes
+        
+        if service._get_ffmpeg_path():
+            # If ffmpeg is present, it will be a real MP3 file
+            assert os.path.getsize(path1) > 0
+        else:
+            # Otherwise it's a WAV container
+            import wave
+            with wave.open(path1, 'rb') as f:
+                assert f.getnchannels() == 1
+                assert f.getsampwidth() == 2
+                assert f.getframerate() == 24000
+                assert f.readframes(f.getnframes()) == expected_bytes
         
         assert mock_client.models.generate_content.call_count == 1
         
@@ -93,13 +99,17 @@ def test_audio_endpoints(mock_client_class, client):
     response = client.get('/api/sections/1/audio')
     assert response.status_code == 200
     assert response.content_type in ('audio/wav', 'audio/mpeg')
-    import wave
-    import io
-    with wave.open(io.BytesIO(response.data), 'rb') as f:
-        assert f.getnchannels() == 1
-        assert f.getsampwidth() == 2
-        assert f.getframerate() == 24000
-        assert f.readframes(f.getnframes()) == expected_bytes
+    
+    if client.application.tts_service._get_ffmpeg_path():
+        assert len(response.data) > 0
+    else:
+        import wave
+        import io
+        with wave.open(io.BytesIO(response.data), 'rb') as f:
+            assert f.getnchannels() == 1
+            assert f.getsampwidth() == 2
+            assert f.getframerate() == 24000
+            assert f.readframes(f.getnframes()) == expected_bytes
     response.close()
 
     # Test GET audio endpoint for untranslated Law 3 (empty body)

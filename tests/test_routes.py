@@ -135,3 +135,44 @@ def test_progress_tracking_api_flow(client):
     updated_data = json.loads(prog_resp_updated.data)
     assert updated_data['completed_laws'] == [1]
 
+def test_get_section_json_api_en(client):
+    response = client.get('/api/sections/1?lang=en')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['id'] == 1
+    assert data['label'] == 'Law 1'
+    assert data['title'] == 'NEVER OUTSHINE THE MASTER'
+    assert 'comfortably superior' in data['body']
+    assert data['language'] == 'en'
+
+def test_get_section_audio_api_en(client):
+    from unittest.mock import MagicMock, patch
+    with patch('app.services.tts.genai.Client') as mock_client_class:
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        
+        class MockInlineData:
+            def __init__(self, data):
+                self.data = data
+        class MockPart:
+            def __init__(self, data):
+                self.inline_data = MockInlineData(data)
+        class MockContent:
+            def __init__(self, data):
+                self.parts = [MockPart(data)]
+        class MockCandidate:
+            def __init__(self, data):
+                self.content = MockContent(data)
+        class MockResponse:
+            def __init__(self, data):
+                self.candidates = [MockCandidate(data)]
+                
+        mock_client.models.generate_content.return_value = MockResponse(b"mocked-english-audio")
+        
+        client.application.tts_service._api_key = "mock-key"
+        
+        response = client.get('/api/sections/1/audio?lang=en')
+        assert response.status_code == 200
+        assert response.content_type in ('audio/wav', 'audio/mpeg')
+        response.close()
+
