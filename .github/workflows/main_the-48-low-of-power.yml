@@ -9,10 +9,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # ⏰ Automatically checks and syncs Azure's outbound IPs every 2 hours
+  schedule:
+    - cron: '0 */2 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ⚡ Only run the heavy compilation build if a human pushes code or triggers it manually
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
 
@@ -41,12 +46,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    # ⚙️ Run if the build was successful OR if it's running on the background 2-hour timer
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     permissions:
       id-token: write
       contents: read
 
     steps:
+      # 📦 Only download files if we are pushing code changes
       - name: Download artifact from build job
+        if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
           name: python-app
@@ -58,14 +67,16 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_EBE32C2664864831A852418E25916AAE }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C3B2600BCC8D4378B3D1920FFFA2B074 }}
 
+      # 🚀 Only deploy code if we are pushing code changes
       - name: 'Deploy to Azure Web App'
+        if: github.event_name != 'schedule'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'the-48-low-of-power'
           slot-name: 'Production'
 
-      # 🔄 NEW AUTOMATION STEP: Sync the App Service outbound IPs to the VM's Network Security Group
+      # 🔥 ALWAYS RUNS: This fires during code deployments AND on the 2-hour background clock
       - name: 'Sync App Service IPs to Postgres NSG'
         uses: azure/CLI@v2
         with:
