@@ -403,6 +403,74 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.header-controls-desktop {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-controls-mobile {
+    display: none;
+    position: relative;
+}
+
+.header-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    min-width: 11rem;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+    z-index: 20;
+}
+
+.header-dropdown[hidden] {
+    display: none;
+}
+
+.header-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-color);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--transition-smooth);
+}
+
+.header-dropdown-item:hover,
+.header-dropdown-item:focus-visible {
+    background-color: var(--hover-bg);
+    outline: none;
+}
+
+.mobile-lang-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    padding: 0.1rem 0.35rem;
+    border: 1.5px solid var(--accent-color);
+    border-radius: 4px;
+    color: var(--accent-color);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
 }
 
 /* --- Social Icons & Hover Tooltips --- */
@@ -511,6 +579,27 @@ body {
 
     .logo-text {
         display: inline-block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: calc(100vw - 7rem);
+    }
+
+    .left-bar-controls {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .header-controls-desktop {
+        display: none;
+    }
+
+    .header-controls-mobile {
+        display: block;
+    }
+
+    .top-bar {
+        padding: 0 1rem;
     }
 
     .reader-viewport {

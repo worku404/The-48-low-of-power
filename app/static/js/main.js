@@ -38,28 +38,49 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const langBtn = document.getElementById('lang-btn');
     const langBtnText = document.getElementById('lang-btn-text');
+    const mobileLangBtn = document.getElementById('mobile-lang-btn');
+    const mobileLangBtnText = document.getElementById('mobile-lang-btn-text');
+    const mobileLangLabel = document.getElementById('mobile-lang-label');
+    const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+    const mobileThemeLabel = document.getElementById('mobile-theme-label');
+    const mobileMoonIcon = mobileThemeToggle ? mobileThemeToggle.querySelector('.mobile-moon-icon') : null;
+    const mobileSunIcon = mobileThemeToggle ? mobileThemeToggle.querySelector('.mobile-sun-icon') : null;
+    const headerMenuBtn = document.getElementById('header-menu-btn');
+    const headerDropdown = document.getElementById('header-dropdown');
 
     // --- Theme & Language Management ---
     initializeTheme();
     updateLanguageUI();
     updateGlobalStaticTexts();
 
-    langBtn.addEventListener('click', () => {
+    function toggleLanguage() {
         currentLang = currentLang === 'en' ? 'am' : 'en';
         localStorage.setItem('lang', currentLang);
         updateLanguageUI();
         updateGlobalStaticTexts();
         loadLaw(currentLawId);
-    });
+    }
+
+    langBtn.addEventListener('click', toggleLanguage);
+    if (mobileLangBtn) {
+        mobileLangBtn.addEventListener('click', () => {
+            toggleLanguage();
+            closeHeaderDropdown();
+        });
+    }
 
     function updateLanguageUI() {
         if (currentLang === 'en') {
             langBtnText.textContent = 'አማ';
             langBtn.setAttribute('title', 'ወደ አማርኛ ቀይር (Switch to Amharic)');
+            if (mobileLangBtnText) mobileLangBtnText.textContent = 'አማ';
+            if (mobileLangLabel) mobileLangLabel.textContent = 'Language / ቋንቋ';
             document.documentElement.setAttribute('lang', 'en');
         } else {
             langBtnText.textContent = 'EN';
             langBtn.setAttribute('title', 'Switch to English / ወደ እንግሊዝኛ ቀይር');
+            if (mobileLangBtnText) mobileLangBtnText.textContent = 'EN';
+            if (mobileLangLabel) mobileLangLabel.textContent = 'ቋንቋ / Language';
             document.documentElement.setAttribute('lang', 'am');
         }
     }
@@ -85,11 +106,19 @@ document.addEventListener('DOMContentLoaded', () => {
         renderUserProgressContainer();
     }
 
-    themeToggle.addEventListener('click', () => {
+    function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         setTheme(newTheme);
-    });
+    }
+
+    themeToggle.addEventListener('click', toggleTheme);
+    if (mobileThemeToggle) {
+        mobileThemeToggle.addEventListener('click', () => {
+            toggleTheme();
+            closeHeaderDropdown();
+        });
+    }
 
     function initializeTheme() {
         const storedTheme = localStorage.getItem('theme');
@@ -107,10 +136,54 @@ document.addEventListener('DOMContentLoaded', () => {
         if (theme === 'dark') {
             moonIcon.style.display = 'none';
             sunIcon.style.display = 'block';
+            if (mobileMoonIcon) mobileMoonIcon.style.display = 'none';
+            if (mobileSunIcon) mobileSunIcon.style.display = 'block';
+            if (mobileThemeLabel) mobileThemeLabel.textContent = 'Light mode';
         } else {
             moonIcon.style.display = 'block';
             sunIcon.style.display = 'none';
+            if (mobileMoonIcon) mobileMoonIcon.style.display = 'block';
+            if (mobileSunIcon) mobileSunIcon.style.display = 'none';
+            if (mobileThemeLabel) mobileThemeLabel.textContent = 'Dark mode';
         }
+    }
+
+    function openHeaderDropdown() {
+        if (!headerDropdown || !headerMenuBtn) return;
+        headerDropdown.hidden = false;
+        headerMenuBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeHeaderDropdown() {
+        if (!headerDropdown || !headerMenuBtn) return;
+        headerDropdown.hidden = true;
+        headerMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    if (headerMenuBtn && headerDropdown) {
+        headerMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (headerDropdown.hidden) {
+                openHeaderDropdown();
+            } else {
+                closeHeaderDropdown();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!headerDropdown.hidden &&
+                !headerDropdown.contains(e.target) &&
+                e.target !== headerMenuBtn &&
+                !headerMenuBtn.contains(e.target)) {
+                closeHeaderDropdown();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !headerDropdown.hidden) {
+                closeHeaderDropdown();
+            }
+        });
     }
 
     // --- Sidebar Responsiveness & Collapsing ---
