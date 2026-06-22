@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -24,15 +24,12 @@ jobs:
         with:
           python-version: '3.13'
 
-      # 🛠️ Local Build Section (Optional)
-      # The following section in your workflow is designed to catch build issues early on the client side, before deployment. This can be helpful for debugging and validation. However, if this step significantly increases deployment time and early detection is not critical for your workflow, you may remove this section to streamline the deployment process.
       - name: Create and Start virtual environment and Install dependencies
         run: |
           python -m venv antenv
           source antenv/bin/activate
           pip install -r requirements.txt
                 
-      # By default, when you enable GitHub CI/CD integration through the Azure portal, the platform automatically sets the SCM_DO_BUILD_DURING_DEPLOYMENT application setting to true. This triggers the use of Oryx, a build engine that handles application compilation and dependency installation (e.g., pip install) directly on the platform during deployment. Hence, we exclude the antenv virtual environment directory from the deployment artifact to reduce the payload size. 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
@@ -41,18 +38,12 @@ jobs:
             .
             !antenv/
 
-      # 🚫 Opting Out of Oryx Build
-      # If you prefer to disable the Oryx build process during deployment, follow these steps:
-      # 1. Remove the SCM_DO_BUILD_DURING_DEPLOYMENT app setting from your Azure App Service Environment variables.
-      # 2. Refer to sample workflows for alternative deployment strategies: https://github.com/Azure/actions-workflow-samples/tree/master/AppService
-      
-
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
       - name: Download artifact from build job
@@ -73,4 +64,24 @@ jobs:
         with:
           app-name: 'the-48-low-of-power'
           slot-name: 'Production'
-          
+
+      # 🔄 NEW AUTOMATION STEP: Sync the App Service outbound IPs to the VM's Network Security Group
+      - name: 'Sync App Service IPs to Postgres NSG'
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            echo "Fetching all potential outbound IPs for the-48-low-of-power..."
+            
+            # 1. Fetch the outbound IP addresses array from Azure
+            IP_LIST=$(az webapp show --name the-48-low-of-power --resource-group the-48-low-of-power_group --query "possibleOutboundIpAddresses" -o tsv)
+            
+            echo "Updating NSG rule 'AllowPostgres5432' with fresh IPs..."
+            
+            # 2. Automatically overwrite the source address spaces in your NSG rule
+            az network nsg rule update \
+              --resource-group gold-e-learning_group \
+              --nsg-name gold-e-learning-nsg \
+              --name AllowPostgres5432 \
+              --source-address-prefixes $IP_LIST
+              
+            echo "Firewall sync complete!"
