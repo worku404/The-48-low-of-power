@@ -1,7 +1,10 @@
 audio_cache_backup
 temp.py
 temp2.py
-
+scratch
+audio_azure.py
+audio_en.py
+convert_wav_to_mp3.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
