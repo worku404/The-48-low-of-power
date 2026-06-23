@@ -285,7 +285,9 @@
                     <!-- Editorial Content Body -->
                     <div class="reader-body {% if not active_section.body %}coming-soon{% endif %}" id="view-law-body">
                         {% if active_section.body %}
-                        {{ active_section.body }}
+                        {% for paragraph in active_section.body.split('\n\n') %}
+                        <p>{{ paragraph }}</p>
+                        {% endfor %}
                         {% else %}
                         ይህ ክፍል ገና አልተተረጎመም። በቅርቡ ይደርሳል! (This law has not been translated yet. Coming soon!)
                         {% endif %}
